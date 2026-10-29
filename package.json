@@ -1,0 +1,1 @@
+{"name":"reach-input-journeys","version":"0.1.0","private":true,"type":"module","scripts":{"test":"node --test test/*.test.ts","demo":"node examples/demo.ts","browser":"node examples/browser-run.ts"},"engines":{"node":">=24"},"devDependencies":{"playwright":"1.62.1"}}
