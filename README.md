@@ -4,10 +4,10 @@ Reach explores a checkpoint contract for whether a browser game reaches menu, pl
 
 ## Try it
 
-Requires Node.js 24 and npm. The browser tests require Playwright's Chromium. From the project root:
+Requires Node.js 24 and npm. The browser tests require Playwright's Chromium. From the project root (the committed lockfile pins the package resolution):
 
 ```sh
-npm install
+npm ci
 npx playwright install chromium
 node --test test/*.test.ts
 node --test test/browser.e2e.ts
