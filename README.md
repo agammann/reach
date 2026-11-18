@@ -1,6 +1,6 @@
-# Reach — input journey prototype
+# Reach
 
-Reach explores a checkpoint contract for whether a browser game reaches menu, play, pause, recovery and finish using keyboard and discrete single-action profiles. It includes a clean-room sample game, a Playwright adapter, per-step screenshots, local evidence viewer and human observations. It is an early prototype, not accessibility certification. Automated input profiles do not simulate disability or replace disabled players, assistive hardware, or usability studies.
+Reach records whether a browser game progresses through menu, play, pause, recovery and finish with keyboard or discrete single-action controls. It includes a sample game, a Playwright adapter, per-step screenshots and a local viewer for the outcomes and human observations. Its reports are functional test evidence. Accessibility evaluation also requires intended players, appropriate assistive hardware and usability research.
 
 ## Try it
 
@@ -17,7 +17,9 @@ node examples/browser-run.ts single-action
 
 Alternatively, if Chrome or Edge is already installed, set `REACH_BROWSER_CHANNEL` to `chrome` or `msedge` before running the browser commands. The default uses Playwright-managed Chromium.
 
-Each run creates a new uniquely named directory under `evidence/` and prints its path; open its `index.html` locally to inspect screenshots and outcomes. Earlier runs are preserved. Set `REACH_EVIDENCE_ROOT` to choose another output root. Each run writes JSON, a Markdown guide and a static HTML viewer. Files stay local. Reports and screenshots can contain sensitive content: inspect them before sharing. Evidence folders are ignored by Git.
+Each completed or blocked journey creates a new directory under `evidence/` and prints its path. Open `index.html` in a browser to inspect the outcomes, notes and screenshots. The directory also contains the JSON report and Markdown guide. Earlier runs are preserved. Set `REACH_EVIDENCE_ROOT` to choose another directory. Files stay local and can contain sensitive content. Inspect them before sharing. Git ignores the default evidence directory.
+
+The browser command exits 0 for a completed journey, 1 for a blocked checkpoint with evidence, and 2 for invalid arguments, observations or setup failures. Use `keyboard` or `single-action`. Omitting the profile selects `keyboard`.
 
 The sample responds to Enter, Escape and R in the keyboard profile, and individual Space presses in the single-action profile. It never holds a key. To demonstrate detected blocks, run `node examples/browser-run.ts keyboard trap`, `node examples/browser-run.ts keyboard unpausable`, or `node examples/browser-run.ts single-action held-only`. Repeat without the fault argument to see the corrected version. These switches simulate defects in the sample game; they are not a substitute for testing an actual game.
 
@@ -27,7 +29,7 @@ For observations, put a JSON array like `[{"step":1,"note":"Focus was difficult 
 
 The browser adapter in `src/playwright-adapter.ts` demonstrates Playwright input and screenshots for the sample game's `data-checkpoint` attribute. Implement `Adapter` in `src/reach.ts` for another game: reset with a seed, deliver actions, observe the named checkpoints and capture evidence. The game must expose trustworthy semantic checkpoints and the adapter must supply deterministic setup, appropriate timeouts and input mappings. The bundled adapter is specific to the sample, has immediate checks and is not a general game recorder. Screenshots are optional in the core contract; capture failures are recorded separately and do not change a checkpoint outcome.
 
-The browser suite exercises the sample using both profiles and three injected faults. Validation still needed: integrate an actual game, review with intended players, add journey recording and handle games with asynchronous transitions. Integration may cost more than it saves for a tiny game. No market-fit or safety claim is made.
+The browser suite exercises both profiles and three intentionally blocked sample journeys. The shipped adapter covers the bundled sample and checks immediate transitions. Other games need their own adapter and verification, including any asynchronous transitions and evaluation with intended players.
 
 ## Context
 

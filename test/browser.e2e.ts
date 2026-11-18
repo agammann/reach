@@ -27,6 +27,25 @@ for (const [profile, fault, expected] of [['keyboard',undefined,'finish'],['sing
     } finally { await adapter.close(); await rm(directory,{recursive:true,force:true}); }
   });
 }
+
+test('a blocked CLI journey preserves evidence and returns exit 1', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'reach-blocked-'));
+  const exec = promisify(execFile);
+  try {
+    await assert.rejects(exec(process.execPath, ['examples/browser-run.ts', 'keyboard', 'trap'], {
+      env: {...process.env, REACH_EVIDENCE_ROOT: root},
+    }), {code: 1});
+    const entries = await readdir(root);
+    assert.equal(entries.length, 1);
+    const directory = join(root, entries[0]);
+    const report = JSON.parse(await readFile(join(directory, 'report.json'), 'utf8'));
+    assert.deepEqual(report.steps.map(step => [step.checkpoint, step.passed]), [['menu', true], ['play', false]]);
+    assert.ok((await readdir(directory)).includes('step-1.png'));
+  } finally {
+    await rm(root, {recursive: true, force: true});
+  }
+});
+
 test('repeated browser runs preserve all previous evidence', async () => {
   const root = await mkdtemp(join(tmpdir(),'reach-repeat-'));
   const exec = promisify(execFile);

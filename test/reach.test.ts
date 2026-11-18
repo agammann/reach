@@ -1,5 +1,9 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
+import {spawnSync} from 'node:child_process';
+import {access, mkdtemp, rm, writeFile} from 'node:fs/promises';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
 import {run, guide} from '../src/reach.ts';
 import {SyntheticGame} from '../examples/synthetic.ts';
 import {viewer} from '../src/viewer.ts';
@@ -19,6 +23,26 @@ test('guide retains observations and explicitly marks missing screenshots', asyn
 test('rejects invalid inputs', async () => {
   await assert.rejects(run(new SyntheticGame(), 'keyboard', NaN), /seed/);
   await assert.rejects(run(new SyntheticGame(), 'keyboard', 1, [{step:99,note:'x'}]), /observation/);
+});
+test('invalid CLI profiles and observations leave no evidence directory', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'reach-invalid-'));
+  const evidence = join(root, 'evidence');
+  const observations = join(root, 'observations.json');
+  try {
+    await writeFile(observations, '[null]');
+    for (const [profile, expected] of [['keybord', /profile must be/], ['keyboard', /observations must be an array/]] as const) {
+      const result = spawnSync(process.execPath, ['examples/browser-run.ts', profile], {
+        encoding: 'utf8', env: {...process.env, REACH_OBSERVATIONS: observations, REACH_EVIDENCE_ROOT: evidence},
+      });
+      assert.ifError(result.error);
+      assert.equal(result.status, 2);
+      assert.match(result.stderr, expected);
+      assert.equal(result.stdout, '');
+      await assert.rejects(access(evidence), {code: 'ENOENT'});
+    }
+  } finally {
+    await rm(root, {recursive: true, force: true});
+  }
 });
 test('viewer escapes observations and rejects arbitrary screenshot paths', async () => {
   const report = await run(new SyntheticGame(), 'keyboard', 1, [{step:0,note:'<script>alert(1)</script>'}]);
