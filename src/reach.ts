@@ -14,11 +14,20 @@ export interface Report { seed: number; profile: Profile; steps: Evidence[]; }
 
 const journey: ReadonlyArray<[Action | null, Checkpoint]> = [[null,'menu'],['start','play'],['pause','pause'],['recover','recover'],['finish','finish']];
 
+export function validateObservations(observations: unknown): asserts observations is Observation[] {
+  if (!Array.isArray(observations) || observations.some(observation =>
+    !observation || typeof observation !== 'object' || !Number.isInteger(observation.step) ||
+    observation.step < 0 || observation.step >= journey.length || typeof observation.note !== 'string'
+  )) {
+    throw new Error('observations must be an array of notes with step numbers from 0 to 4');
+  }
+}
+
 /** Stops at the first failed checkpoint: later checks would be misleading. */
 export async function run(adapter: Adapter, profile: Profile, seed: number, observations: Observation[] = []): Promise<Report> {
   if (!Number.isSafeInteger(seed)) throw new Error('seed must be a safe integer');
   if (!['keyboard','single-action'].includes(profile)) throw new Error('unsupported profile');
-  if (observations.some(o => !Number.isInteger(o.step) || o.step < 0 || o.step >= journey.length || typeof o.note !== 'string')) throw new Error('invalid observation');
+  validateObservations(observations);
   const report: Report = {seed, profile, steps: []};
   await adapter.reset(seed);
   for (const [i, [action, checkpoint]] of journey.entries()) {
